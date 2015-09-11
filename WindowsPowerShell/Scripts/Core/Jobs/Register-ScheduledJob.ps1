@@ -1,4 +1,4 @@
-﻿# Toggle regions: Ctrl + M
+# Toggle regions: Ctrl + M
 
 #region Demo setup
 Write-Warning 'This is a demo script which should be run line by line or sections at a time, stopping script execution'
@@ -16,8 +16,12 @@ break
 
 #region Credentials
 
+# Store credentials locally since they are encrypted using DPAPI
+$LocalCredPath = "$Env:AppData\WindowsPowerShell\Credentials"
+
+$ScheduledJobCredential = Join-Path -Path $LocalCredPath -Childpath ($($env:username) + '.cred.xml')
 $ScheduledJobCredential = Get-Credential -UserName (whoami) -Message 'Enter password'
-$ScheduledJobCredential | Export-Clixml -Path "$env:HOMEPATH\$($env:COMPUTERNAME).cred.xml"
+$ScheduledJobCredential | Export-Clixml -Path $ScheduledJobCredential
 
 #endregion
 
@@ -106,8 +110,11 @@ Get-Job -Name Clean-Folder
 
 # More info: http://www.powershellmagazine.com/2015/01/08/introducing-the-royal-ts-powershell-module/
 
+$LocalCredPath = "$Env:AppData\WindowsPowerShell\Credentials"
+
+$ADCredentialPath = Join-Path -Path $LocalCredPath -Childpath 'AD.cred.xml'
 $ADCredential = Get-Credential
-$ADCredential | Export-Clixml -Path "$env:HOMEPATH\$($env:COMPUTERNAME)_AD.cred.xml"
+$ADCredential | Export-Clixml -Path $ADCredentialPath
 
 
 $ScheduledJobOption = New-ScheduledJobOption -RunElevated
@@ -121,16 +128,18 @@ ScheduledJobOption = $ScheduledJobOption
 ScriptBlock = {
 Write-Output "Started"
 
-$CredentialPath = "$env:HOMEPATH\$($env:COMPUTERNAME).cred.xml"
+$LocalCredPath = "$Env:AppData\WindowsPowerShell\Credentials"
+
+$ADCredentialPath = Join-Path -Path $LocalCredPath -Childpath 'AD.cred.xml'
 
 try
 {
-    Test-Path -Path $CredentialPath -ErrorAction Stop
-    $ADCredential  = Import-Clixml "$env:HOMEPATH\$($env:COMPUTERNAME)_AD.cred.xml" -ErrorAction Stop
+    Test-Path -Path $ADCredentialPath -ErrorAction Stop
+    $ADCredential  = Import-Clixml $ADCredentialPath -ErrorAction Stop
 }
 catch 
 {
-    throw "$CredentialPath does not exist or is invalid, aborting"
+    throw "$ADCredentialPath does not exist or is invalid, aborting"
 }
 
 
