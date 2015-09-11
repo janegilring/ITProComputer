@@ -1,12 +1,26 @@
 #region Credentials
 
-#Todo: Look into using the BetterCredentials module by Joel Bennett instead
-# http://www.powershellgallery.com/packages/BetterCredentials/
+<#
 
-$LocalUserCredPath = "$env:HOMEPATH\$($env:COMPUTERNAME).cred.xml"
-$WorkCredPath = "$env:HOMEPATH\$($env:COMPUTERNAME)_work.cred.xml"
-$BabyStatsCredPath = "$env:HOMEPATH\$($env:COMPUTERNAME)_Babystats.cred.xml"
-$TelldusCredPath = "$env:HOMEPATH\$($env:COMPUTERNAME)_Telldus.cred.xml"
+Todo: Look into better ways to handle credentials, for example:
+
+-Using the BetterCredentials module by Joel Bennett instead (http://www.powershellgallery.com/packages/BetterCredentials)
+-Using Protect-CmsMessage available in V5 to store credentials using a certificate
+-Using Dave Wyatt`s ProtectedData module (compatible back to V2) to store credentials using a certificate
+
+#>
+
+# Store credentials locally since they are encrypted using DPAPI
+$LocalCredPath = "$Env:AppData\WindowsPowerShell\Credentials"
+
+$LocalUserCredPath = Join-Path -Path $LocalCredPath -Childpath ($($env:username) + '.cred.xml')
+$WorkCredPath = Join-Path -Path $LocalCredPath -Childpath 'Work.cred.xml'
+$BabyStatsCredPath = Join-Path -Path $LocalCredPath -Childpath 'Babystats.cred.xml'
+$TelldusCredPath = Join-Path -Path $LocalCredPath -Childpath 'Telldus.cred.xml'
+
+if (-not (Test-Path $LocalCredPath)) {
+New-Item -Path $Env:AppData\WindowsPowerShell -Name Credentials -ItemType Directory
+}
 
 if (-not (Test-Path $LocalUserCredPath)) {
 Get-Credential | Export-Clixml -Path $LocalUserCredPath
