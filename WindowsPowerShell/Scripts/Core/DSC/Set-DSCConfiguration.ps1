@@ -103,6 +103,10 @@ Get-NetConnectionProfile
 # Optionally, change network profile to Private
 Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private
 
+# Add local computer to the TrustedHosts property in the WSMan-client
+Set-Item -Path WSMan:\localhost\Client\TrustedHosts -Value $env:COMPUTERNAME -Force -Concatenate
+Get-Item -Path WSMan:\localhost\Client\TrustedHosts
+
 # Apply the LCM configuration
 Set-DscLocalConfigurationManager -Path $DSCMOFDirectory
 
