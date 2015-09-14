@@ -26,9 +26,6 @@ $DSCCertificatesDirectory = Join-Path -Path $DSCRootDirectory -ChildPath Certifi
 
 #region Certificate for encrypting DSC credentials
 
-# Create working directory
-#if (-not $(Test-Path c:\TextFileOnUserDesktop)) {mkdir c:\TextFileOnUserDesktop}
-
 # Check if valid certificate is already present    
 $Certificate = Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -eq "CN=Self Signed Cert - DSC" -AND $_.PrivateKey.KeyExchangeAlgorithm} | Select-Object -First 1
 
