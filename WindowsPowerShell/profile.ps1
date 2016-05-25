@@ -36,8 +36,8 @@ if (Get-Module -ListAvailable -Name MyCoreTools) {
 Import-Module MyCoreTools
 }
 
-if ((Get-Module -ListAvailable -Name TabExpansion++) -and $host.Version.Major -ge 3 -and $host.Name -eq "ConsoleHost") {
-Import-Module TabExpansion++
+if ((Get-Module -ListAvailable -Name TabExpansionPlusPlus) -and $host.Version.Major -ge 3 -and $host.Name -eq "ConsoleHost") {
+Import-Module TabExpansionPlusPlus
 }
 
 if ((Get-Module -ListAvailable -Name PSReadLine) -and $host.Version.Major -ge 3 -and $host.Name -eq "ConsoleHost") {
