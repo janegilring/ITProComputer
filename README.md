@@ -4,11 +4,9 @@ This repository contains artifacts for managing your IT Pro computer using Power
 
 **Session description**
 
-*
-Are you reluctant about re-installing your IT Pro computer where you have so much software installed and tweaked to fit your needs and environment? 
+*Are you reluctant about re-installing your IT Pro computer where you have so much software installed and tweaked to fit your needs and environment? 
 Join this session to see how this process can be largely automated by leveraging the PackageManagement and PowerShellGet modules. 
-We`ll also look at how to set up your PowerShell profile to be synchronized and customized for different environments, such as your home computer, your virtual machine used for VPN, your computer at work and so on.
-*
+We`ll also look at how to set up your PowerShell profile to be synchronized and customized for different environments, such as your home computer, your virtual machine used for VPN, your computer at work and so on.*
 
 [A recording of the session is available on YouTube.](https://www.youtube.com/watch?v=eJwoDZYXf1E)
 
