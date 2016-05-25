@@ -27,23 +27,14 @@ $DSCCertificatesDirectory = Join-Path -Path $DSCRootDirectory -ChildPath Certifi
 #region Certificate for encrypting DSC credentials
 
 # Check if valid certificate is already present    
-$Certificate = Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -eq "CN=Self Signed Cert - DSC" -AND $_.PrivateKey.KeyExchangeAlgorithm} | Select-Object -First 1
+$Certificate = Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -eq "CN=DscEncryptionCert" -AND $_.PrivateKey.KeyExchangeAlgorithm} | Select-Object -First 1
 
 # If no certificate is available, create one
-if (-not $Certificate) {
-@'
-[NewRequest]
-Subject = "CN=Self Signed Cert - DSC"
-ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
-FriendlyName = "Created for use with PowerShell Desired State Configuration"
-ValidityPeriod = Years
-ValidityPeriodUnits = 5
-RequestType = Cert
-'@ | Out-File "$DSCCertificatesDirectory\DSC-certificate-template.inf"
 
-$TemplateFile = Join-Path -Path (Resolve-Path $DSCCertificatesDirectory).Path -ChildPath DSC-certificate-template.inf
 $CerFile = Join-Path -Path (Resolve-Path $DSCCertificatesDirectory).Path -ChildPath ($($env:computername) + '.cer')
-certreq.exe -new -machine $TemplateFile $CerFile
+
+$Certificate = New-SelfSignedCertificate -Type DocumentEncryptionCertLegacyCsp -DnsName 'DscEncryptionCert' -HashAlgorithm SHA256 -NotBefore (Get-Date).AddYears(5)
+
 }
 
 # Check if valid certificate is already present    
@@ -121,7 +112,7 @@ Get-DscLocalConfigurationManager
 # Install modules required by the DSC Configuration. We are pre-installing these since a Pull Server is not used in this scenario.
 
 # Install modules from PSGallery
-$Modules = @('PackageManagementProviderResource','xComputerManagement')
+$Modules = @('cChoco','CustomizeWindows10','PackageManagementProviderResource','xComputerManagement')
 
 foreach ($Module in $Modules) {
 
@@ -131,17 +122,6 @@ Find-Module -Name $Module | Install-Module -Scope AllUsers -Force
 
   }
 }
-
-# Installing modules from local Git-repository (these are not available on PSGallery as of 31.08.2015)
-if (-not (Test-Path $env:ProgramFiles\WindowsPowerShell\Modules\cPackageManagement)) {
-
-Copy-Item -Path ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Modules\cPackageManagement -Destination $env:ProgramFiles\WindowsPowerShell\Modules -Recurse -Force
-
-}
-
-# Pull CustomizeWindows10 module from local repository, since the latest version containing the DSC Resource isn`t available on PowerShell Gallery yet
-Remove-Item $env:ProgramFiles\WindowsPowerShell\Modules\CustomizeWindows10 -Force -Recurse
-Copy-Item -Path ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Modules\CustomizeWindows10 -Destination $env:ProgramFiles\WindowsPowerShell\Modules -Recurse -Force
 
 # Modules to be installed by DSC Configuration - these are modules you want available on the local machine which is not synced via source control
 # Need a list of modules to be installed. As you know, this is very flexible in PowerShell. A couple of examples using hardcoded input and CSV-input:
@@ -160,7 +140,7 @@ $modules = @('await')
 
 # Need a list of packages to be installed. As you know, this is very flexible in PowerShell. A couple of examples using hardcoded input and CSV-input:
 
-$packages = @('7zip','git','googlechrome','javaruntime','notepadplusplus','vlc','sysinternals','putty','dropbox','sublimetext3','sublimetext3.packagecontrol','teamviewer','windirstat','sourcetree','FoxitReader', 'Snagit', 'githubforwindows','lastpass','royalts')
+$packages = @('7zip','git','googlechrome','javaruntime','notepadplusplus','vlc','sysinternals','putty','dropbox','teamviewer','windirstat','sourcetree', 'Snagit','lastpass','royalts')
 
 $packages = Import-Csv -Path (Join-Path -Path $DSCRootDirectory -ChildPath Packages.csv)
 $packages = $packages.Name
@@ -170,134 +150,87 @@ $packages = @('7zip')
 
 #endregion
 
-#region AppxPackages
-
-$AppxPackagesToRemove = @('Microsoft.3DBuilder', 'Microsoft.BingFinance', 'Microsoft.BingNews',
-'Microsoft.BingSports', 'Microsoft.MicrosoftSolitaireCollection',
-'Microsoft.People', 'Microsoft.Windows.Photos', 'Microsoft.WindowsCamera',
-'microsoft.windowscommunicationsapps', 'Microsoft.WindowsPhone',
-'Microsoft.WindowsSoundRecorder', 'Microsoft.XboxApp', 'Microsoft.ZuneMusic',
-'Microsoft.ZuneVideo')
-
-$AppxPackagesToRemove = Import-Csv -Path (Join-Path -Path $DSCRootDirectory -ChildPath AppXPackagesToRemove.csv)
-$AppxPackagesToRemove = $AppxPackagesToRemove.Name
-
-# Single package used for testing purposes
-$AppxPackagesToRemove = @('Microsoft.3DBuilder')
-
-#endregion
 
 #region DSC Configuration
 configuration ITPro {
 
-Import-DscResource -ModuleName PSDesiredStateConfiguration, CustomizeWindows10, PackageManagementProviderResource, cPackageManagement, xComputerManagement
+Import-DscResource -ModuleName PSDesiredStateConfiguration,cChoco,CustomizeWindows10,PackageManagementProviderResource
 
 Node $AllNodes.Nodename {
 
-xComputer ComputerName {
+cChocoInstaller Choco {
 
-Name = $Node.Nodename
-WorkGroupName = $Node.WorkGroupName
-Credential = $Node.UserCredentials
-
-}
-
-CustomizeWindows10CompositeDSCResource WindowsSettings {
-
-EnableWin10ConnectedStandby = $false
-EnableDriverInstallationFromWindowsUpdate = $false
-EnablePowerShellOnWinX = $true
-EnableSnapFill = $true
-EnableSnapAssist = $true
-ShowFileExtensions = $true
-ShowHiddenFiles = $true
-ShowProtectedOSFiles = $true
-ShowDesktopIcons = $false
-WindowsUpdateMode = 'Notify'
-
-UserCredentials = $Node.UserCredentials
-
-}
-
-PowerPlan PowerPlanSettings {
-
-ActivePowerPlan = 'Balanced'
-SleepAfterOnAC = '0'
-SleepAfterOnDC = '0'
-TurnOffDisplayAfterOnAC = '60'
-TurnOffDisplayAfterOnDC = '10'
-
-}
-
-foreach ($package in $node.AppxPackagesToRemove) {
-
-AppxPackageRemoval $package {
-
-PackageName = $package
-PSDSCRunAsCredential = $Node.UserCredentials
-
-}
-
-}
-
-PackageManagementSource CrayonPackages {
-
-Name = 'CrayonPackages'
-Ensure = 'Present'
-ProviderName = 'Chocolatey'
-InstallationPolicy = 'Trusted'
-SourceUri = $ConfigurationData.NonNodeData.PackageManagementSourceUri
-PSDSCRunAsCredential = $Node.UserCredentials
-
-}
-
-PackageManagementSource CrayonModules {
-
-Name = 'CrayonModules'
-Ensure = 'Present'
-ProviderName = 'PSModule'
-InstallationPolicy = 'Trusted'
-SourceUri = $ConfigurationData.NonNodeData.PowerShellGetSourceUri
-PSDSCRunAsCredential = $Node.UserCredentials
-
-}
-
-foreach ($module in $node.modules) {
-
-PSModule $module {
-
-Name = $module
-Ensure = 'Present'
-InstallationPolicy = 'Trusted'
-Repository =  $ConfigurationData.NonNodeData.ModuleSource
-PSDSCRunAsCredential = $Node.UserCredentials
-DependsOn = '[PackageManagementSource]CrayonModules'
-
-}
-
+    InstallDir = $node.ChocoInstallationPath
+    
 }
 
 foreach ($package in $node.packages) {
 
-PackageManagement $package {
+cChocoPackageInstaller $package
+{
+    Name = '$package'
+    PsDscRunAsCredential = $Node.UserCredentials
+    DependsOn = "[cChocoInstaller]Choco"
+}
 
-    PackageName = $package
+}
+
+PackageManagementSource $ConfigurationData.NonNodeData.ModuleSource {
+
+    Name = $ConfigurationData.NonNodeData.ModuleSource
     Ensure = 'Present'
-    PackageProvider = 'Chocolatey'
-    PackageSource = $ConfigurationData.NonNodeData.PackageSource
+    ProviderName = 'PowerShellGet'
+    InstallationPolicy = 'Untrusted'
+    SourceUri = $ConfigurationData.NonNodeData.PSGallerySourceUri
     PSDSCRunAsCredential = $Node.UserCredentials
-    DependsOn = '[PackageManagementSource]CrayonPackages'
+
+}
+
+foreach ($module in $node.Modules) {
+
+    PSModule $module {
+
+        Name = $module
+        Ensure = 'Present'
+        InstallationPolicy = 'Trusted'
+        Repository =  $ConfigurationData.NonNodeData.ModuleSource
+        PSDSCRunAsCredential = $Node.UserCredentials
+        DependsOn = "[PackageManagementSource]$($ConfigurationData.NonNodeData.ModuleSource)"
 
     }
 
 }
 
+CustomizeWindows10CompositeDSCResource WindowsSettings {
 
+    EnableWin10ConnectedStandby = $false
+    EnablePowerShellOnWinX = $true
+    EnableSnapFill = $true
+    EnableSnapAssist = $true
+    ShowFileExtensions = $true
+    ShowHiddenFiles = $true
+    ShowProtectedOSFiles = $true
+    ShowDesktopIcons = $false
+    WindowsUpdateMode = 'Notify'
+
+    UserCredentials = $Node.UserCredentials
 
 }
 
-}
 
+PowerPlan PowerPlanSettings {
+
+    ActivePowerPlan = 'Balanced'
+    SleepAfterOnAC = '0'
+    SleepAfterOnDC = '0'
+    TurnOffDisplayAfterOnAC = '60'
+    TurnOffDisplayAfterOnDC = '30'
+
+        }
+
+    }
+
+}
 
 
 
@@ -306,20 +239,18 @@ $ConfigData = @{
         AllNodes = @(
             @{
                 NodeName = $env:computername
-                WorkGroupName = 'WORKGROUP'
+                PSDscAllowDomainUser = $true
                 CertificateFile = Join-Path -Path (Resolve-Path $DSCCertificatesDirectory).Path -ChildPath ($($env:computername) + '.cer')
                 UserCredentials = Get-Credential -UserName (whoami) -Message ' '
                 Packages = $Packages
                 Modules = $Modules
-                AppxPackagesToRemove = $AppxPackagesToRemove
+                ChocoInstallationPath = 'C:\ProgramData\Chocolatey'
             }
         )
         NonNodeData = 
             @{
-                PackageManagementSourceUri = 'https://packages.demo.crayon.com/nuget'
-                PowerShellGetSourceUri = 'https://powershellget.demo.crayon.com/nuget/' #Gotcha: Must have trailing / for Get-PackageSource -Location to work
-                PackageSource = 'CrayonPackages'
-                ModuleSource = 'CrayonModules'
+                PSGallerySourceUri = 'https://www.powershellgallery.com/api/v2/' #Gotcha: Must have trailing / for Get-PackageSource -Location to work
+                ModuleSource = 'PSGallery'
             }   
     }
 
