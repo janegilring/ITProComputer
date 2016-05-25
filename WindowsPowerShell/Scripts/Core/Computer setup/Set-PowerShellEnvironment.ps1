@@ -17,22 +17,22 @@ break
 # Inspect folder structure
 # The tree command output got issues in the ISE, thus we`re launching the Console Host. If PSCX was installed, we could have used Show-Tree.
 
-Start-Process -FilePath powershell.exe -ArgumentList "-NoExit -Command tree (Resolve-Path ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell)"
+Start-Process -FilePath powershell.exe -ArgumentList "-NoExit -Command tree (Resolve-Path ~\Git\ITPro-Computer\WindowsPowerShell)"
 
-Get-ChildItem ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Environments -Recurse
+Get-ChildItem ~\Git\ITPro-Computer\WindowsPowerShell\Environments -Recurse
 
-Get-ChildItem ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\*profile.ps1 | ForEach-Object {psedit $PSItem.FullName}
+Get-ChildItem ~\Git\ITPro-Computer\WindowsPowerShell\*profile.ps1 | ForEach-Object {psedit $PSItem.FullName}
 
-Get-ChildItem ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Environments\All\*.ps1 | ForEach-Object {psedit $PSItem.FullName}
+Get-ChildItem ~\Git\ITPro-Computer\WindowsPowerShell\Environments\All\*.ps1 | ForEach-Object {psedit $PSItem.FullName}
 
-psedit ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Environments\DEMO\setup.ps1
+psedit ~\Git\ITPro-Computer\WindowsPowerShell\Environments\DEMO\setup.ps1
 
 
 # Configure symbolic link for WindowsPowerShell-folder
 
 Get-ChildItem ~\Documents
 
-New-Item -Path ~\Documents -Name WindowsPowerShell -ItemType SymbolicLink -Target ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell
+New-Item -Path ~\Documents -Name WindowsPowerShell -ItemType SymbolicLink -Target ~\Git\ITPro-Computer\WindowsPowerShell
 
 Get-ChildItem ~\Documents
 

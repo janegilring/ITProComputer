@@ -18,7 +18,7 @@ break
 #region Variables
 
 $Environment = 'DEMO'
-$DSCRootDirectory = "~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Environments\$Environment\Scripts\DSC\"
+$DSCRootDirectory = "~\Git\ITPro-Computer\WindowsPowerShell\Environments\$Environment\Scripts\DSC\"
 $DSCMOFDirectory = Join-Path -Path $DSCRootDirectory -ChildPath MOF-files
 $DSCCertificatesDirectory = Join-Path -Path $DSCRootDirectory -ChildPath Certificates
 

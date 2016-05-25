@@ -15,13 +15,13 @@ break
 #>
 
 # Scheduled jobs for repetitive tasks
-psedit "~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Core\Jobs\Register-ScheduledJob.ps1"
+psedit "~\Git\ITPro-Computer\WindowsPowerShell\Scripts\Core\Jobs\Register-ScheduledJob.ps1"
 
 # Option 1: Manual configuration
-psedit "~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Core\Computer setup\Customizations.ps1"
+psedit "~\Git\ITPro-Computer\WindowsPowerShell\Scripts\Core\Computer setup\Customizations.ps1"
 
 # Option 2: Declarative configuration
-psedit "~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Core\DSC\Set-DSCConfiguration.ps1"
+psedit "~\Git\ITPro-Computer\WindowsPowerShell\Scripts\Core\DSC\Set-DSCConfiguration.ps1"
 
 # Environment configuration
-psedit "~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Core\Computer setup\Set-PowerShellEnvironment.ps1"
+psedit "~\Git\ITPro-Computer\WindowsPowerShell\Scripts\Core\Computer setup\Set-PowerShellEnvironment.ps1"

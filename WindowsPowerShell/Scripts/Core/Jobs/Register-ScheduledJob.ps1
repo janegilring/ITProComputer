@@ -152,7 +152,7 @@ Copy-Item -Path (Join-Path -Path $TargetPath -ChildPath CrayonDemo.rtsz) -Destin
 catch {
 }
 
-$script = Join-Path -Path (Resolve-Path -Path ~\Git) -ChildPath 'CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Royal TS\Update-RoyalFolder.ps1'
+$script = Join-Path -Path (Resolve-Path -Path ~\Git) -ChildPath 'ITPro-Computer\WindowsPowerShell\Scripts\Royal TS\Update-RoyalFolder.ps1'
 & $script -RootOUPath 'OU=Servers,OU=DEMO,DC=demo,DC=crayon,DC=com' -ADCredential $ADCredential -ADDomainController 'demo.crayon.com' -RoyalDocumentPath $RoyalDocumentPath -RemoveInactiveComputerObjects -UpdateRoyalComputerProperties -UpdateRoyalFolderProperties -Verbose
 
 
