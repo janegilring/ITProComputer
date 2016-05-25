@@ -9,6 +9,8 @@ break
     Name:        Initialize-Repository.ps1
     Description: This demo script is part of the presentation 
                  Manage your IT Pro computer using PowerShell
+
+    Change log: 2016-05-25 - Updated initalization script to run on a regular Windows 10 computer - dependencies of Crayon Demo environment removed
                  
 #>
 
@@ -20,10 +22,6 @@ break
 
 Windows 10 Enterprise default installation with the following customizations:
 -Local user (admin-privileges) created
--All Windows Updates available per 01.09.2015 installed
--Internal root CA certifcate trusted
--Registered internal PackageManagement Source and installed Git client from internal repository (for the sake of time)
--The PackageManagement and PowerShellGet modules from the WMF 5 Production Preview (August 2015) is pre-installed (the build of PackageManagement in Windows 10 RTM is not being used due to a bug which caused packages to not install correctly)
 
 
 #>
@@ -41,42 +39,16 @@ $psISE.Options.Zoom = 140
 
  }
 
+# Install Chocolatey
+Invoke-WebRequest https://chocolatey.org/install.ps1 | Invoke-Expression
 
-<#
-
-The repositories used in the demo is internal NuGet instances running on Windows Server 2012 R2 IIS
-
-NuGet
-http://blogs.msdn.com/b/powershell/archive/2014/05/20/setting-up-an-internal-powershellget-repository.aspx
-http://learn-powershell.net/2014/04/11/setting-up-a-nuget-feed-for-use-with-oneget/
-
-ProGet (easier to set up and more features, 3rd party)
-http://asaconsultant.blogspot.no/2014/05/build-your-local-powershell-module.html
-
-#>
-
-
-# Add root certificate for internal CA in order to trust internal PackageManagement/PowerShellGet repositories
-Invoke-WebRequest -Uri 'http://pki.demo.crayon.com/crl/Crayon Demo Root CA.cer' -OutFile "$env:temp\Crayon Demo Root CA.cer"
-
-certutil -addstore root "$env:temp\Crayon Demo Root CA.cer"
-
-
-# Register internal PackageManagement repository and install Git client
-Register-PackageSource -Name CrayonPackages -Location 'https://packages.demo.crayon.com/nuget' -Provider Chocolatey -Trusted -Verbose
-
-Find-Package -Source CrayonPackages
-
-Find-Package -Name git -RequiredVersion 2.5.0 -Source CrayonPackages | Install-Package -Force
-
+# Install Git client
+C:\ProgramData\Chocolatey\choco.exe install git
 
 # Download Git repository
 $gitrepo = Join-Path -Path (Resolve-Path -Path ~\Git) -ChildPath CrayonDemo-ITPro-Computer
-
-Start-Process -FilePath powershell.exe -ArgumentList "git --% clone https://git.crayon.com/janring/CrayonDemo-ITPro-Computer.git $gitrepo"
-
+Start-Process -FilePath powershell.exe -ArgumentList "git --% clone https://github.com/janegilring/ITProComputer.git $gitrepo"
 
 # Run remaining scripts from repository
 dir ~\Git\CrayonDemo-ITPro-Computer
-
 psedit ~\Git\CrayonDemo-ITPro-Computer\WindowsPowerShell\Scripts\Core\Demos\Invoke-ITProComputerDemoScripts.ps1
